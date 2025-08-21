@@ -1,0 +1,161 @@
+resources:
+  requests:
+    memory: 100Mi
+    cpu: 50m
+  limits:
+    memory: 200Mi
+    cpu: 100m
+
+adminPassword: "${admin_password}"
+
+ingress:
+  enabled: true
+  ingressClassName: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+  hosts:
+    - monitoring.masterinfra.net
+  tls:
+    - secretName: grafana-tls
+      hosts:
+        - monitoring.masterinfra.net
+
+service:
+  type: ClusterIP
+  port: 80
+
+# Persistent storage para Grafana
+persistence:
+  enabled: true
+  type: pvc
+  size: 2Gi
+  storageClassName: "local-path"
+  accessModes:
+    - ReadWriteOnce
+
+# Fix para permissões do volume
+initChownData:
+  enabled: true
+
+# Datasources provisioning
+datasources:
+  datasources.yaml:
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        url: http://kube-prometheus-stack-prometheus:9090
+        access: proxy
+        isDefault: true
+        editable: false
+        jsonData:
+          timeInterval: 30s
+          
+      - name: AlertManager
+        type: alertmanager
+        url: http://kube-prometheus-stack-alertmanager:9093
+        access: proxy
+        editable: false
+
+# Dashboards provisioning
+dashboardProviders:
+  dashboardproviders.yaml:
+    apiVersion: 1
+    providers:
+      - name: 'default'
+        orgId: 1
+        folder: ''
+        type: file
+        disableDeletion: false
+        editable: true
+        options:
+          path: /var/lib/grafana/dashboards/default
+      - name: 'kubernetes'
+        orgId: 1
+        folder: 'Kubernetes'
+        type: file
+        disableDeletion: false
+        editable: true
+        options:
+          path: /var/lib/grafana/dashboards/kubernetes
+      - name: 'nginx'
+        orgId: 1
+        folder: 'NGINX'
+        type: file
+        disableDeletion: false
+        editable: true
+        options:
+          path: /var/lib/grafana/dashboards/nginx
+      - name: 'security'
+        orgId: 1
+        folder: 'Security'
+        type: file
+        disableDeletion: false
+        editable: true
+        options:
+          path: /var/lib/grafana/dashboards/security
+
+dashboards:
+  kubernetes:
+    k8s-cluster-overview:
+      gnetId: 7249
+      revision: 1
+      datasource: Prometheus
+    k8s-node-exporter:
+      gnetId: 1860
+      revision: 37
+      datasource: Prometheus
+    k8s-pod-overview:
+      gnetId: 6417
+      revision: 1
+      datasource: Prometheus
+  nginx:
+    nginx-ingress-controller:
+      gnetId: 9614
+      revision: 1
+      datasource: Prometheus
+    nginx-overview:
+      gnetId: 12708
+      revision: 2
+      datasource: Prometheus
+  security:
+    website-security:
+      json: |
+        {
+          "dashboard": {
+            "id": null,
+            "title": "Website Security Dashboard",
+            "tags": ["security", "website", "masterinfra"],
+            "timezone": "browser",
+            "panels": [
+              {
+                "id": 1,
+                "title": "NGINX Requests by Status Code",
+                "type": "stat",
+                "targets": [
+                  {
+                    "expr": "sum(rate(nginx_ingress_controller_requests{host=\"masterinfra.net\"}[5m])) by (status)",
+                    "legendFormat": "{{ status }}"
+                  }
+                ],
+                "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
+              },
+              {
+                "id": 2,
+                "title": "Rate Limiting Events",
+                "type": "timeseries",
+                "targets": [
+                  {
+                    "expr": "increase(nginx_ingress_controller_response_duration_seconds_count{status=\"503\"}[5m])",
+                    "legendFormat": "Rate Limited Requests"
+                  }
+                ],
+                "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
+              }
+            ],
+            "time": {"from": "now-1h", "to": "now"},
+            "refresh": "30s"
+          }
+        }

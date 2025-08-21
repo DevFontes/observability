@@ -1,0 +1,60 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "Website Security Dashboard",
+    "tags": ["security", "website", "masterinfra"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "NGINX Requests by Status Code",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(rate(nginx_ingress_controller_requests{host=\"masterinfra.net\"}[5m])) by (status)",
+            "legendFormat": "{{ status }}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
+      },
+      {
+        "id": 2,
+        "title": "Rate Limiting Events",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "increase(nginx_ingress_controller_response_duration_seconds_count{status=\"503\"}[5m])",
+            "legendFormat": "Rate Limited Requests"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
+      },
+      {
+        "id": 3,
+        "title": "SSL Certificate Status",
+        "type": "singlestat",
+        "targets": [
+          {
+            "expr": "(probe_ssl_earliest_cert_expiry - time()) / 86400",
+            "legendFormat": "Days Until Expiry"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 8, "x": 0, "y": 8}
+      },
+      {
+        "id": 4,
+        "title": "Top IP Addresses by Requests",
+        "type": "table",
+        "targets": [
+          {
+            "expr": "topk(10, sum(rate(nginx_ingress_controller_requests[5m])) by (remote_addr))",
+            "legendFormat": "{{ remote_addr }}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 16, "x": 8, "y": 8}
+      }
+    ],
+    "time": {"from": "now-1h", "to": "now"},
+    "refresh": "30s"
+  }
+}

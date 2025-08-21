@@ -1,0 +1,37 @@
+# Terraform files
+*.tfstate
+*.tfstate.*
+*.tfstate.d/
+.terraform/
+.terraform.lock.hcl
+terraform.tfvars
+*.auto.tfvars
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.bak
+
+# Environment files
+.env
+.env.local
+.env.production
+
+# Secrets and sensitive data
+secrets/
+private-keys/
+*.pem
+*.key
+*.crt

@@ -1,0 +1,91 @@
+prometheus:
+  prometheusSpec:
+    retention: 12h
+    scrapeInterval: 30s
+
+    # External labels para Thanos
+    externalLabels:
+      cluster: "k3s-homelab"
+      environment: "production"
+      region: "ca-central-1"
+
+    # Thanos Sidecar Configuration
+    thanos:
+      image: "quay.io/thanos/thanos:v0.39.2"
+      objectStorageConfig:
+        existingSecret:
+          name: thanos-objstore-config
+          key: objstore.yml
+      minTime: "-2h"
+    resources:
+      requests:
+        memory: 200Mi
+        cpu: 100m
+      limits:
+        memory: 800Mi
+        cpu: 600m
+
+    # ServiceMonitor customizado - usar padrão do Helm
+    serviceMonitorSelectorNilUsesHelmValues: true
+
+    # Adicionar scrape configs customizados
+    additionalScrapeConfigs:
+      # NGINX Ingress Controller metrics
+      - job_name: "nginx-ingress-controller"
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names:
+                - ingress-nginx
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_name]
+            regex: "ingress-nginx-controller-.*"
+            action: keep
+          - source_labels: [__meta_kubernetes_pod_container_port_number]
+            regex: "10254"
+            action: keep
+          - source_labels: [__meta_kubernetes_pod_ip]
+            target_label: __address__
+            replacement: "${1}:10254"
+        metrics_path: /metrics
+
+      # Website NGINX metrics
+      - job_name: "website-nginx"
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names:
+                - website
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_label_app]
+            regex: "website"
+            action: keep
+          - source_labels: [__meta_kubernetes_pod_container_port_number]
+            regex: "9113"
+            action: keep
+          - source_labels: [__meta_kubernetes_pod_ip]
+            target_label: __address__
+            replacement: "${1}:9113"
+        metrics_path: /metrics
+
+# Thanos Components
+thanosRuler:
+  enabled: true
+  thanosRulerSpec:
+    objectStorageConfig:
+      existingSecret:
+        name: thanos-objstore-config
+        key: objstore.yml
+    resources:
+      requests:
+        memory: 128Mi
+        cpu: 100m
+      limits:
+        memory: 512Mi
+        cpu: 500m
+
+grafana:
+  enabled: false
+
+alertmanager:
+  enabled: true
