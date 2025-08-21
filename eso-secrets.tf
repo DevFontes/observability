@@ -112,3 +112,46 @@ EOF
     kubectl_manifest.oci_secret_store_monitoring
   ]
 }
+
+# External Secret for Grafana Admin Password
+resource "kubectl_manifest" "grafana_admin_password_external_secret" {
+  yaml_body = yamlencode({
+    apiVersion = "external-secrets.io/v1"
+    kind       = "ExternalSecret"
+    metadata = {
+      name      = "grafana"
+      namespace = "monitoring"
+    }
+    spec = {
+      refreshInterval = "1h"
+      secretStoreRef = {
+        name = kubectl_manifest.oci_secret_store_monitoring.name
+        kind = "SecretStore"
+      }
+      target = {
+        name           = "grafana"
+        creationPolicy = "Owner"
+        type          = "Opaque"
+        template = {
+          data = {
+            "admin-password" = "{{ .adminPassword }}"
+            "admin-user"     = "admin"
+            "ldap-toml"      = ""
+          }
+        }
+      }
+      data = [
+        {
+          secretKey = "adminPassword"
+          remoteRef = {
+            key = "grafana-admin-password"
+          }
+        }
+      ]
+    }
+  })
+
+  depends_on = [
+    kubectl_manifest.oci_secret_store_monitoring
+  ]
+}

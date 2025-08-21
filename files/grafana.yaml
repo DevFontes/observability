@@ -6,7 +6,12 @@ resources:
     memory: 200Mi
     cpu: 100m
 
-adminPassword: "${admin_password}"
+admin:
+  existingSecret: "grafana"
+  passwordKey: admin-password
+  userKey: admin-user
+
+adminPassword: ""
 
 ingress:
   enabled: true
@@ -52,7 +57,7 @@ datasources:
         editable: false
         jsonData:
           timeInterval: 30s
-          
+
       - name: AlertManager
         type: alertmanager
         url: http://kube-prometheus-stack-alertmanager:9093
@@ -64,33 +69,33 @@ dashboardProviders:
   dashboardproviders.yaml:
     apiVersion: 1
     providers:
-      - name: 'default'
+      - name: "default"
         orgId: 1
-        folder: ''
+        folder: ""
         type: file
         disableDeletion: false
         editable: true
         options:
           path: /var/lib/grafana/dashboards/default
-      - name: 'kubernetes'
+      - name: "kubernetes"
         orgId: 1
-        folder: 'Kubernetes'
+        folder: "Kubernetes"
         type: file
         disableDeletion: false
         editable: true
         options:
           path: /var/lib/grafana/dashboards/kubernetes
-      - name: 'nginx'
+      - name: "nginx"
         orgId: 1
-        folder: 'NGINX'
+        folder: "NGINX"
         type: file
         disableDeletion: false
         editable: true
         options:
           path: /var/lib/grafana/dashboards/nginx
-      - name: 'security'
+      - name: "security"
         orgId: 1
-        folder: 'Security'
+        folder: "Security"
         type: file
         disableDeletion: false
         editable: true

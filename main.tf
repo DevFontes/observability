@@ -15,9 +15,7 @@ resource "helm_release" "grafana" {
   repository = "https://grafana.github.io/helm-charts"
   chart      = "grafana"
   version    = "9.3.1"
-  values     = [templatefile("${path.module}/files/grafana.yaml", {
-    admin_password = var.grafana_admin_password
-  })]
+  values     = [file("${path.module}/files/grafana.yaml")]
 }
 
 resource "kubectl_manifest" "servicemonitors" {

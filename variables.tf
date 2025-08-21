@@ -19,12 +19,6 @@ variable "oci_tenancy_ocid" {
   type        = string
 }
 
-variable "grafana_admin_password" {
-  description = "Grafana admin password"
-  type        = string
-  sensitive   = true
-}
-
 # Thanos S3 Configuration (non-sensitive)
 variable "thanos_s3_endpoint" {
   description = "Wasabi S3 Endpoint"
