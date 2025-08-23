@@ -1,0 +1,265 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "Loki Logs Dashboard",
+    "tags": ["loki", "logs", "monitoring"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Log Volume Over Time",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "sum(rate({__name__=~\".+\"}[5m])) by (job)",
+            "refId": "A",
+            "datasource": {
+              "type": "loki",
+              "uid": "loki"
+            },
+            "legendFormat": "{{ job }}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "drawStyle": "line",
+              "lineInterpolation": "linear",
+              "barAlignment": 0,
+              "lineWidth": 1,
+              "fillOpacity": 0,
+              "gradientMode": "none",
+              "spanNulls": false,
+              "insertNulls": false,
+              "showPoints": "auto",
+              "pointSize": 5,
+              "stacking": {
+                "mode": "none",
+                "group": "A"
+              },
+              "axisPlacement": "auto",
+              "axisLabel": "",
+              "axisColorMode": "text",
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "axisCenteredZero": false,
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "vis": false
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            },
+            "unit": "logs/sec"
+          },
+          "overrides": []
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+        "options": {
+          "tooltip": {
+            "mode": "single",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom",
+            "showLegend": true,
+            "calcs": []
+          }
+        }
+      },
+      {
+        "id": 2,
+        "title": "Error Logs",
+        "type": "logs",
+        "targets": [
+          {
+            "expr": "{level=\"error\"} |= \"\"",
+            "refId": "A",
+            "datasource": {
+              "type": "loki",
+              "uid": "loki"
+            }
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+        "options": {
+          "showTime": true,
+          "showLabels": false,
+          "showCommonLabels": false,
+          "wrapLogMessage": false,
+          "prettifyLogMessage": false,
+          "enableLogDetails": true,
+          "dedupStrategy": "none",
+          "sortOrder": "Descending"
+        }
+      },
+      {
+        "id": 3,
+        "title": "Log Levels Distribution",
+        "type": "piechart",
+        "targets": [
+          {
+            "expr": "sum by (level) (count_over_time({__name__=~\".+\"} |= \"\" [1h]))",
+            "refId": "A",
+            "datasource": {
+              "type": "loki",
+              "uid": "loki"
+            },
+            "legendFormat": "{{ level }}"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "vis": false
+              }
+            },
+            "mappings": []
+          },
+          "overrides": []
+        },
+        "gridPos": {"h": 8, "w": 6, "x": 0, "y": 8},
+        "options": {
+          "reduceOptions": {
+            "values": false,
+            "calcs": [
+              "lastNotNull"
+            ],
+            "fields": ""
+          },
+          "pieType": "pie",
+          "tooltip": {
+            "mode": "single",
+            "sort": "none"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom",
+            "showLegend": true,
+            "values": []
+          }
+        }
+      },
+      {
+        "id": 4,
+        "title": "Top 10 Log Sources",
+        "type": "table",
+        "targets": [
+          {
+            "expr": "topk(10, sum by (job) (count_over_time({__name__=~\".+\"} [1h])))",
+            "refId": "A",
+            "datasource": {
+              "type": "loki",
+              "uid": "loki"
+            },
+            "format": "table"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "custom": {
+              "align": "auto",
+              "cellOptions": {
+                "type": "auto"
+              },
+              "inspect": false
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green",
+                  "value": null
+                },
+                {
+                  "color": "red",
+                  "value": 80
+                }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {"h": 8, "w": 6, "x": 6, "y": 8},
+        "options": {
+          "showHeader": true,
+          "cellHeight": "sm",
+          "footer": {
+            "show": false,
+            "reducer": [
+              "sum"
+            ],
+            "countRows": false
+          }
+        }
+      },
+      {
+        "id": 5,
+        "title": "Recent Application Logs",
+        "type": "logs",
+        "targets": [
+          {
+            "expr": "{job=~\".*app.*\"} |= \"\"",
+            "refId": "A",
+            "datasource": {
+              "type": "loki",
+              "uid": "loki"
+            }
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+        "options": {
+          "showTime": true,
+          "showLabels": true,
+          "showCommonLabels": false,
+          "wrapLogMessage": true,
+          "prettifyLogMessage": false,
+          "enableLogDetails": true,
+          "dedupStrategy": "none",
+          "sortOrder": "Descending"
+        }
+      }
+    ],
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "timepicker": {},
+    "timezone": "",
+    "refresh": "30s",
+    "schemaVersion": 38,
+    "version": 0,
+    "gnetId": null
+  }
+}

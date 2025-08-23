@@ -64,6 +64,14 @@ datasources:
         access: proxy
         editable: false
 
+      - name: Loki
+        type: loki
+        url: http://loki:3100
+        access: proxy
+        editable: false
+        jsonData:
+          maxLines: 1000
+
 # Dashboards provisioning
 dashboardProviders:
   dashboardproviders.yaml:
@@ -101,6 +109,14 @@ dashboardProviders:
         editable: true
         options:
           path: /var/lib/grafana/dashboards/security
+      - name: "logs"
+        orgId: 1
+        folder: "Logs"
+        type: file
+        disableDeletion: false
+        editable: true
+        options:
+          path: /var/lib/grafana/dashboards/logs
 
 dashboards:
   kubernetes:
@@ -125,6 +141,11 @@ dashboards:
       gnetId: 12708
       revision: 2
       datasource: Prometheus
+  logs:
+    loki:
+      gnetId: 15141
+      revision: 1
+      datasource: Loki
   security:
     website-security:
       json: |

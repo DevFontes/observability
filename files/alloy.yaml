@@ -1,0 +1,97 @@
+alloy:
+  configMap:
+    create: true
+    content: |-
+      loki.write "local" {
+        endpoint {
+          url       = "http://loki-gateway.monitoring.svc/loki/api/v1/push"
+          tenant_id = "k3s"
+        }
+
+        external_labels = {}
+      }
+        
+      logging {
+        level = "info"
+        format = "logfmt"
+      }
+
+      local.file_match "k8s_pod_logs" {
+        path_targets = [
+          {
+            __path__ = "/var/log/containers/*.log",
+            job      = "kubernetes-pods",
+          },
+        ]
+      }
+
+      loki.source.file "pod_logs" {
+        targets       = local.file_match.k8s_pod_logs.targets
+        forward_to    = [loki.process.pod_logs.receiver]
+        tail_from_end = true
+      }
+
+      loki.process "pod_logs" {
+
+        stage.cri {}
+
+        stage.labels {
+          values = {
+            flags  = "",
+            stream  = "",
+          }
+        }
+
+        stage.regex {
+          source     = "filename"
+          expression = ".*/(?P<pod>[^_]+)_(?P<namespace>[^_]+)_(?P<container>[^-]+)"
+        }
+
+        stage.labels {
+          values = {
+            pod       = "",
+            namespace = "",
+            container = "",
+          }
+        }
+
+        stage.timestamp {
+          format = "RFC3339Nano"
+          source = "timestamp"
+        }
+
+        stage.output {
+          source = "message"
+        }
+
+        stage.limit {
+          rate = 100
+          burst = 1000
+        }
+
+        stage.multiline {
+          firstline      = "^\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2}:\\d{2},\\d{3} - "
+          max_wait_time  = "10s"
+          max_lines      = 2048
+        }
+
+        stage.static_labels {
+          values = {
+            cluster = "local",
+            job = "pod-logs",
+          }
+        }
+
+        forward_to = [loki.write.local.receiver]
+      }
+
+  mounts:
+    varlog: true
+
+  resources:
+    requests:
+      memory: 128Mi
+      cpu: 100m
+    limits:
+      memory: 256Mi
+      cpu: 200m

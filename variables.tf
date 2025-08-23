@@ -20,13 +20,13 @@ variable "oci_tenancy_ocid" {
 }
 
 # Thanos S3 Configuration (non-sensitive)
-variable "thanos_s3_endpoint" {
+variable "s3_endpoint" {
   description = "Wasabi S3 Endpoint"
   type        = string
   default     = "s3.ca-central-1.wasabisys.com"
 }
 
-variable "thanos_s3_region" {
+variable "s3_region" {
   description = "Wasabi S3 Region"
   type        = string
   default     = "ca-central-1"

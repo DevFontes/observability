@@ -25,8 +25,8 @@ resource "kubectl_manifest" "oci_secret_store_monitoring" {
     spec = {
       provider = {
         oracle = {
-          region = var.oci_region
-          vault  = var.oci_vault_ocid
+          region        = var.oci_region
+          vault         = var.oci_vault_ocid
           principalType = "UserPrincipal"
           auth = {
             user    = var.oci_user_ocid
@@ -77,8 +77,8 @@ resource "kubectl_manifest" "thanos_objstore_external_secret" {
 type: S3
 config:
   bucket: ${var.thanos_metrics_bucket}
-  endpoint: ${var.thanos_s3_endpoint}
-  region: ${var.thanos_s3_region}
+  endpoint: ${var.s3_endpoint}
+  region: ${var.s3_region}
   access_key: {{ .thanosAccessKey }}
   secret_key: {{ .thanosSecretKey }}
   insecure: false
@@ -131,7 +131,7 @@ resource "kubectl_manifest" "grafana_admin_password_external_secret" {
       target = {
         name           = "grafana"
         creationPolicy = "Owner"
-        type          = "Opaque"
+        type           = "Opaque"
         template = {
           data = {
             "admin-password" = "{{ .adminPassword }}"
@@ -145,6 +145,53 @@ resource "kubectl_manifest" "grafana_admin_password_external_secret" {
           secretKey = "adminPassword"
           remoteRef = {
             key = "grafana-admin-password"
+          }
+        }
+      ]
+    }
+  })
+
+  depends_on = [
+    kubectl_manifest.oci_secret_store_monitoring
+  ]
+}
+# External Secret for Loki S3 Configuration
+resource "kubectl_manifest" "loki_s3_external_secret" {
+  yaml_body = yamlencode({
+    apiVersion = "external-secrets.io/v1"
+    kind       = "ExternalSecret"
+    metadata = {
+      name      = "loki-s3-config"
+      namespace = "monitoring"
+    }
+    spec = {
+      refreshInterval = "1h"
+      secretStoreRef = {
+        name = kubectl_manifest.oci_secret_store_monitoring.name
+        kind = "SecretStore"
+      }
+      target = {
+        name           = "loki-s3-config"
+        creationPolicy = "Owner"
+        type           = "Opaque"
+        template = {
+          data = {
+            "AWS_ACCESS_KEY_ID"     = "{{ .thanosAccessKey }}"
+            "AWS_SECRET_ACCESS_KEY" = "{{ .thanosSecretKey }}"
+          }
+        }
+      }
+      data = [
+        {
+          secretKey = "thanosAccessKey"
+          remoteRef = {
+            key = "thanos-monitoring-access-key"
+          }
+        },
+        {
+          secretKey = "thanosSecretKey"
+          remoteRef = {
+            key = "thanos-monitoring-secret-key"
           }
         }
       ]

@@ -7,6 +7,8 @@ Stack completo de observabilidade para Kubernetes usando Prometheus, Grafana e T
 ### Core Stack
 - **Prometheus** - Coleta e armazenamento de métricas
 - **Grafana** - Visualização e dashboards
+- **Loki** - Agregação e consulta de logs com armazenamento S3
+- **Grafana Alloy** - Coleta de logs (substitui Promtail)
 - **Thanos** - Armazenamento de longo prazo no S3
 - **External Secrets Operator** - Gerenciamento seguro de credenciais
 
@@ -74,10 +76,20 @@ As configurações sensíveis são gerenciadas através do External Secrets Oper
   - `grafana-admin-password` - Senha do usuário admin
 - **Keys fixas**: `admin-user: "admin"`, `ldap-toml: ""`
 
+### Loki S3 Storage
+- **Secret**: `loki-s3-config`
+- **Keys do Vault** (compartilhadas com Thanos): 
+  - `thanos-s3-endpoint` - Endpoint Wasabi (s3.ca-central-1.wasabisys.com)
+  - `thanos-s3-region` - Região (ca-central-1)
+  - `thanos-monitoring-access-key` - Access key Wasabi
+  - `thanos-monitoring-secret-key` - Secret key Wasabi
+
 ## Features
 
 - ✅ Coleta de métricas com Prometheus
 - ✅ Dashboards customizados no Grafana
+- ✅ Coleta e agregação de logs com Loki + Alloy
+- ✅ Armazenamento de logs em S3
 - ✅ Retenção de longo prazo com Thanos
 - ✅ Gerenciamento seguro de credenciais via ESO
 - ✅ Replicação automática de secrets

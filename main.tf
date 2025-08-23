@@ -14,8 +14,32 @@ resource "helm_release" "grafana" {
   namespace  = "monitoring"
   repository = "https://grafana.github.io/helm-charts"
   chart      = "grafana"
-  version    = "9.3.1"
+  version    = "9.3.3"
   values     = [file("${path.module}/files/grafana.yaml")]
+}
+
+resource "helm_release" "loki" {
+  depends_on = [kubectl_manifest.loki_s3_external_secret]
+  name       = "loki"
+  namespace  = "monitoring"
+  repository = "https://grafana.github.io/helm-charts"
+  chart      = "loki"
+  version    = "6.37.0"
+  values = [templatefile("${path.module}/files/loki.yaml", {
+    loki_s3_endpoint = var.s3_endpoint
+    loki_s3_region   = var.s3_region
+  })]
+
+}
+
+resource "helm_release" "alloy" {
+  depends_on = [helm_release.loki]
+  name       = "alloy"
+  namespace  = "monitoring"
+  repository = "https://grafana.github.io/helm-charts"
+  chart      = "alloy"
+  version    = "1.2.1"
+  values     = [file("${path.module}/files/alloy.yaml")]
 }
 
 resource "kubectl_manifest" "servicemonitors" {
